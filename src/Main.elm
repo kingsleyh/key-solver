@@ -10,16 +10,13 @@ import List.Extra as LE
 
 
 type Msg
-    = NoOp
-    | SetWif String
-    | SetPrivateKey String
+    = SetWif String
     | SetAddress String
     | FindKey
 
 
 type alias Model =
-    { privateKey : String
-    , wif : String
+    { wif : String
     , address : String
     , errors : List String
     , message : String
@@ -34,7 +31,6 @@ view model =
         , div [] (List.map showError model.errors)
         , br [] []
         , div [] [ input [ style [ ( "padding", "10px" ), ( "border", "solid 5px #c9c9c9" ), ( "width", "300px" ) ], onInput SetWif, placeholder "Enter your incorrect NEO WIF here" ] [] ]
-          --        , div [] [ input [ style [("padding","10px"),("border","solid 5px #c9c9c9"),("width","300px")], onInput SetPrivateKey, placeholder "Enter your NEO private key here" ] [] ]
         , br [] []
         , div [] [ input [ style [ ( "padding", "10px" ), ( "border", "solid 5px #c9c9c9" ), ( "width", "300px" ) ], onInput SetAddress, placeholder "Enter your NEO wallet address here " ] [] ]
         , br [] []
@@ -45,7 +41,7 @@ view model =
             False ->
                 button [ onClick FindKey, style [ ( "padding", "15px 32px" ), ( "background-color", "#4CAF50" ), ( "border", "none" ), ( "text-align", "center" ), ( "text-decoration", "none" ), ( "font-size", "16px" ), ( "color", "white" ), ( "display", "inline-block" ) ] ] [ text "Find" ]
         , br [] []
-        , div [ style [("color","green"),("padding","20px")]] [ text model.message]
+        , div [ style [ ( "color", "green" ), ( "padding", "20px" ) ] ] [ text model.message ]
         ]
 
 
@@ -62,12 +58,6 @@ disabledButton model =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            ( model, Cmd.none )
-
-        SetPrivateKey privateKey ->
-            ( { model | privateKey = privateKey }, Cmd.none )
-
         SetWif wif ->
             ( { model | wif = wif }, Cmd.none )
 
@@ -82,25 +72,25 @@ update msg model =
                     else
                         "Sorry the supplied Address is not a valid NEO address"
 
-                wifError1 =
+                wifAlreadyValidError =
                     if Neo.isValidWif model.wif then
                         "Hey - you supplied a valid WIF already!"
                     else
                         ""
 
-                wifError2 =
+                wifWrongLengthError =
                     if (String.length model.wif == 52) then
                         ""
                     else
                         ("Sorry I don't think I can help at this time - your WIF should be 52 chars long - you only have " ++ (toString (String.length model.wif)))
 
                 errors =
-                    [ addressError, wifError1, wifError2 ]
-
-                r =
-                    findKeyFromBadWif model.wif model.address
+                    [ addressError, wifAlreadyValidError, wifWrongLengthError ]
             in
-                ( { model | errors = errors, message = r }, Cmd.none )
+                if String.isEmpty (String.join "" errors) then
+                    ( { model | errors = errors, message = (findKeyFromBadWif model.wif model.address) }, Cmd.none )
+                else
+                    ( { model | errors = errors }, Cmd.none )
 
 
 confusions : List ( String, String )
@@ -173,9 +163,8 @@ findKeyFromBadWif badWif address =
         r =
             l ++ lr ++ l2 ++ l3
 
---        _ =
---            Debug.log ": " r
-
+        --        _ =
+        --            Debug.log ": " r
         f =
             LE.find (\( w, b ) -> b == True) r
     in
@@ -270,7 +259,7 @@ changeAt l i func =
 main : Program Never Model Msg
 main =
     Html.program
-        { init = ( { privateKey = "", wif = "", address = "", errors = [], message = "" }, Cmd.none )
+        { init = ( { wif = "", address = "", errors = [], message = "" }, Cmd.none )
         , view = view
         , update = update
         , subscriptions = always Sub.none
