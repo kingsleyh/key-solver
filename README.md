@@ -1,3 +1,5 @@
+# This project is no longer actively maintained
+
 # Neo Key Solver
 
 This is a tool to find a valid WIF from an incorrectly written WIF which is then cross checked against a supplied public address
